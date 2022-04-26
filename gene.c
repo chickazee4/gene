@@ -1,7 +1,5 @@
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include <limits.h>
 #include <string.h>
 
@@ -10,19 +8,24 @@ int eflag=0;
 int fflag=0;
 int Fflag=0;
 int iflag=0;
+int lflag=0;
 int nflag=0; // to be used later. borked right now.
+int Rflag=0;
 int autofastaid=0;
 int usefile=1;
 
-char* legalchars="ACGTacgt";
+char *legalchars="ACGTacgt";
 long start = 0;
 long end = 0;
+long length = 0;
 char **seqs;
 char **fastaid;
 char *filename;
 int indct;
 int *indices;
 int rowlen=50;
+
+static char bases[256] = {0}; 
 
 int
 indexok(int ix){
@@ -76,10 +79,35 @@ loadfromfile(FILE *fp){
 	fclose(fp);
 }
 
+char *rev(char *inp, int len) // string reverse
+{
+    char *p1=inp;
+    char *p2=inp+len-1;
+    while (p1<p2) {
+        char c=*p1;
+        *p1++=*p2;
+        *p2--=c;
+    }
+    return inp;
+}
+
+
+char
+invert(char base){
+	return bases[(unsigned char)base]==0 ? base : bases[(unsigned char)base];
+}
+
 void
 output(char *seq){
+	int qlen=strlen(seq);
 	if (end==0 || eflag==0){
-		end=strlen(seq);
+		end=qlen;
+	}
+	if(Rflag>0){
+		for(int i=0; i<qlen; i++){
+			seq[i]=invert(seq[i]);
+		}
+		seq=rev(seq, qlen);
 	}
 	for(int oi=0, fi=0; oi<(end-1); oi++){
 		if(fflag>0){
@@ -104,13 +132,20 @@ output(char *seq){
 			}
 		}
 	}
-	if(fflag==0)
-		putc('\n', stdout);
+	putc('\n', stdout);
 }
 
 int
 main(int argc, char **argv)
 {
+	bases['A']='T';
+	bases['C']='G';
+	bases['G']='C';
+	bases['T']='A';
+	bases['a']='t';
+	bases['c']='g';
+	bases['g']='c';
+	bases['t']='a';
 	int alen;
 	if(argc>1) {
 		for(int i=1, j=1; i<argc; i++) {
@@ -147,6 +182,14 @@ main(int argc, char **argv)
 								fprintf(stderr, "W: No filename specified, ignoring -i flag.");
 							i++;
 							break;
+						case 'l':
+							lflag++;
+							if(i<argc-1)
+								length=atol(argv[i+1]);
+							else
+								fprintf(stderr, "W: No length specified, ignoring -l flag.");
+							i++;
+							break;
 						case 'm':
 							if(i<argc-1){
 								switch(argv[i+1][0]){
@@ -155,9 +198,27 @@ main(int argc, char **argv)
 										break;
 									case 'r':
 										legalchars="ACGUacgu";
+										bases['A']='U';
+										bases['C']='G';
+										bases['G']='C';
+										bases['U']='A';
+										bases['a']='u';
+										bases['c']='g';
+										bases['g']='c';
+										bases['u']='a';
 										break;
 									case 'n':
 										legalchars="ACGTURYKMSWBDHVNacgturykmswbdhvn";
+										bases['A']='T';
+										bases['C']='G';
+										bases['G']='C';
+										bases['T']='A';
+										bases['U']='A';
+										bases['a']='t';
+										bases['c']='g';
+										bases['g']='c';
+										bases['t']='a';
+										bases['u']='a';
 										break;
 									case 'a':
 										legalchars="ARNDCQEGHILKMFPSTWYVarndcqeghilkmfpstwyv";
@@ -178,6 +239,9 @@ main(int argc, char **argv)
 								i++;
 							} else fprintf(stderr, "W: No row length specified. Will default to 50.");
 							break;
+						case 'R':
+							Rflag++;
+							break;
 						case 's':
 							start=atol(argv[i+1]);
 							i++;
@@ -193,6 +257,13 @@ main(int argc, char **argv)
 				usefile=0;
 			}
 		}
+	}
+	if(lflag>0){
+		if(start!=0)
+			end=start+length;
+		else if(end!=0)
+			start=end-length;
+		else end=length;
 	}
 	if(usefile>0){
 		if(iflag>0){

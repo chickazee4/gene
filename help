@@ -7,6 +7,10 @@ Options:
 	-f		Indicate that the input sequence is in FASTA format.
 	-F [IDENTIFIER]	Produce an output sequence in FASTA format with the specified sequence identifier, which should begin with >. If the original sequence is provided in FASTA format, a new identifier does not need to be provided but may be provided if the user wishes to override it. If this option is not specified, the output sequence will be provided in raw format.
 	-i FILENAME	Load the sequence from a file. If no filename is specified, the sequence will be loaded first from program arguments, then from stdin. 
+	-l NUMBER	Take only the specified number of bases - useful if modifying multiple sequences and you need the same size from each. This can be combined with -s (to take the specified number of bases following the start given) or -e (to take the specified number preceding the end given).
 	-m [drnax]	Determines which characters in the sequence, if any, will be skipped when reformatting. d allows only standard DNA bases - ACGT. r allows only standard RNA bases - ACGU. n allows all symbols used in nucleic acid notation, including for ambiguous sequences - ACGTURYKMSWBDHVN. a allows all single-letter symbols used for amino acids - ARNDCQEGHILKMFPSTWYV. x allows all letters of the English alphabet. None of these are case-sensitive. Defaults to d. 
 	-r LENGTH	Set the row length for FASTA output (default: 50; minimum recommended: 16).
+	-R		Reverse the order and bases of the output sequence, for nucleic acids only (i.e. sequence ACCGTTGA becomes TCAACGGT). 
 	-s INDEX	Start the new sequence at the specified index.
+	
+Option globbing is supported.
